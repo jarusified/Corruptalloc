@@ -87,6 +87,18 @@ C compiler and there by eliminating such errors at the code level.
 Tools like purify, valgrind only provide the location of the memory corruption, whereas diehard tries to prevent by using an 
 
 
+## Glibc allocator
+
+* Malloc uses syscalls to obtain memory from OS. 
+* There are two invoking a syscall to allocate memory
+	* [brk](http://man7.org/linux/man-pages/man2/sbrk.2.html)
+		* change the location of program break, defines the end of process's data segment. 
+		* Brk obtains memory from kernel by increasing break location. 
+		* When ASLR is turned off, start_brk and brk would point to the end of data segment.
+		* When ASLR is turned on, start_brk and brk would point equal to end of data segment plus a random offset.
+		
+	
+
 ## References
 
 ### Papers
