@@ -123,7 +123,21 @@ calloc(size_t nmemb, size_t t) -
 	* allocates memory for an array of nmemb and returns a pointer to the allocated memory.
 	* memory is set to 0.
 
+	void calloc(size_t nmemb, size_t t){
+		size_t tot = t*nmemb;
+		void *mem = malloc(
+	}
+If the operating system did not zero out contents of physical RAM it might be possible for one process to learn about the 
+memory of another process that had previously used the memory. This would be a security leak. This is the reason why sbrk 
+makes the memory as 0 when it is returned for the first time. 
+
 #### Memory allocator
+
+* When memory cannot be allocated, a consistent recovery plan is required. Phkalloc provides "X" option that instructs the 
+allocator to abort the program. (fancy return).
+
+	extern char *malloc_options;
+	malloc_options ="X";
 
 
 ### Security in dlmalloc :
@@ -135,6 +149,29 @@ calloc(size_t nmemb, size_t t) -
 #### What's not there:
 * malloc can be corrupted by corrupting static bookkeeping itself. 
 
+Buddy allocation for memory, 
+	* satisfy a memory request by split the memory into partitions.
+	* seggregated allocator: divides the heap into various areas and sub-allocators parse the allocation request
+	* sizes are group into classes based on powers of 2, each size is handled by a sub-allocator and has a free
+	  list
+	* buddy memory allocation suffer internal fragmentation because a smaller size buffer like 66 bytes would 
+	  need a 128 byte buffer.
+	  
+C++ containers leaking:
+	Some Containers leak memory, because they contain a pointer which donot delete the objects it is referring to. So we need
+to release them from memory. 
+
+	template <class T>
+	void releaseitems(T &data){
+		typename T::iterator i;
+		for(i = c.begin(); i!=c.end(); ++i){
+			delete *i;
+		}
+	}
+
+#### shared_ptr (smart pointers)
+std::shared_ptr is a smart pointer that retains the ownership of an object through a pointer. It overlaods the * and -> to act like 
+pointers 
 
 ## References
 
