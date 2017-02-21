@@ -97,7 +97,44 @@ Tools like purify, valgrind only provide the location of the memory corruption, 
 		* When ASLR is turned off, start_brk and brk would point to the end of data segment.
 		* When ASLR is turned on, start_brk and brk would point equal to end of data segment plus a random offset.
 		
+
+## DL-Malloc 
+
+### Malloc functions:
+
+malloc(size_t t) -
 	
+	* Allocates "t" bytes and returns a pointer to the allocated memory.
+	* memory is not cleared.
+
+free(void *p) - 
+	
+	* frees the memory space referenced by p.
+	* calling free(p) before pointer "p" is initialised leads to undefined behaviour.
+
+realloc(void *p, size_t t) -
+	
+	* resizes the size of the memory pointer by p.
+	* if p = NULL , it is same as malloc(t);
+	* if t = 0 , it is same as free.
+	
+calloc(size_t nmemb, size_t t) -
+
+	* allocates memory for an array of nmemb and returns a pointer to the allocated memory.
+	* memory is set to 0.
+
+#### Memory allocator
+
+
+### Security in dlmalloc :
+
+#### What's there already:
+* It doesnt allow to modify any memory locations below the base of heap. ie: static variables 
+* detects most improper frees and reallocs. 
+
+#### What's not there:
+* malloc can be corrupted by corrupting static bookkeeping itself. 
+
 
 ## References
 
