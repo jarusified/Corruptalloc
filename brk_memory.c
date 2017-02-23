@@ -9,13 +9,19 @@ int main(){
   printf("current location :%p\n",  current_brk);
   getchar();
 
-  brk(current_brk+4096);
-
+  if(sbrk(40960)<0){
+    perror("sbrk 1");
+  }
+  
   current_brk = sbrk(0);
   printf("current location :%p\n",  current_brk);
   getchar();
 
-  brk(current_brk+4096);
+
+  if(sbrk(40960)<0){
+    perror("sbrk 2");
+  }
+
 
   current_brk = sbrk(0);
   printf("current location :%p\n",  current_brk);
