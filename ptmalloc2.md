@@ -15,10 +15,10 @@ The allocated memory have the characteristic that they may not directly border a
 Writing a heap under invalid circumstances can overwrite meta-data in a de-allocated chunk of memory, or a write occurs to a dangling pointer or to an allocated chunk of memory.
 
 
-	typedef struct-heap-info{
+	typedef struct_heap_info{
 		mstate ar_ptr;
 		struct-heap-info *ptr;
-		size\_t size;
+		size_t size;
 		char pad[]
 }
 
@@ -28,18 +28,18 @@ The above structure is pretty straightforward except mstate, it initialises an a
 Lets look into mstate:
 
 
-	struct malloc\_state{
-		mutex\_t mutex; // Ensures synchronized access to various data structures used by ptmalloc
+	struct malloc_state{
+		mutex_t mutex; // Ensures synchronized access to various data structures used by ptmalloc
 		int flags; // represents various characteristics of current arena.
 		mfastbinptr fastbins[NFASTBINS]; // used for housing chunks that are allocated and free'd
-		long stat\_lock\_direct, stat\_lock\_loop, stat\_lock\_wait;
+		long stat_lock_direct, stat_lock_loop, stat_lock_wait;
 		mchunkptr top; // special chunk of memory that borders the end of available memory. 
 		mchunkptr last_remainder;
 		mchunkptr bins[NBINS*2];
 		unsigned int binmap[BINMAPSIZE];
-		struct malloc\_state *next;
-		INTERNAL\_SIZE\_T system\_mem;
-		INTERNAL\_SIZE\_T max\_system\_mem;
+		struct malloc_state *next;
+		INTERNAL_SIZE_T system_mem;
+		INTERNAL_SIZE_T max_system_mem;
 	}
 
 
@@ -50,11 +50,11 @@ There are like 2 bins, Fastbin and mchunkptr bins[]. bins array operates as a li
 The chunks that are allocated by ptmalloc2 are of the same physical structure regardless of whether they are a fast chunk or a normal chunk. However the representation is different depending on the stateof the chunk. 
 
 
-	struct malloc\_chunk {
-		INTERNAL\_SIZE\_T prev\_size;
-		INTERNAL\_SIZE\_T size;
-		struct malloc\_chunk* fd; // pointer to the next chunk 
-		struct malloc\_chunk* bk; // pointer to the prev chunk
+	struct malloc_chunk {
+		INTERNAL_SIZE_T prev_size;
+		INTERNAL_SIZE_T size;
+		struct malloc_chunk* fd; // pointer to the next chunk 
+		struct malloc_chunk* bk; // pointer to the prev chunk
 	}
 
 
@@ -66,8 +66,66 @@ Regardless of how much memory is requested to be allocated, there will be extra 
              Size of previous chunk
 			 ----------------------------
 			 Size of this chunk |A|M|P
-	mem   -> ----------------------------
+	mem   -> ---------------------------- (mem pointer is returned on malloc() call)
               DATA
 		     ----------------------------
 			 
 
+A,M,P are used as metadata to determine if the current chunk is in a non-main arena, or it was allocated using mmap(). 
+
+
+	### A free'd memory chunk
+	
+	chunk -> ----------------------------
+             Size of previous chunk
+			 ----------------------------
+			 Size of this chunk |A| |P
+	mem   -> ---------------------------- (mem pointer is returned on malloc() call)
+	         Forward pointer to next chunk
+			 Back pointer to previous chunk
+			 unused space
+		     ----------------------------
+
+A -> chunk in main arena
+P -> Previous chunk is in use
+M -> Memory mapped 
+
+**Note**
+
+* Free chunks are traversed via circular linked lists.
+* Allocated chunks are traversed by determining the size and doing pointer arithmetic.
+* Pointer returned to the user by the API starts 8 bytes after beginning of the chunk, which in a free block is the start of metadata used to traverse the linked list.
+
+
+### Binning
+
+Once a memory block has been free'd, it is stored in a linked list called bin,(sorted by size to allow quick access). Bins are an array of pointers to linked list. 
+
+Two types of bin:
+	* Fastbin
+	* Normal bin.
+	
+FastBIN:
+* Chunks of memory are small (default : 60 bytes, max: 80 bytes)
+* Not coalesced with sorrounding chunks on free()
+* not sorted
+* have singular linked lists (instead of doubly linked lists)
+* Data structure is same as normal bin but the representation differs.
+* Removed in LIFO in contrast to traditional FIFO.
+* Because the chunks aren't consolidated, their access is quicker than normal chunk.
+
+The paper says there will be 10 fastbins, to hold the chunks ranging from 0 to 80 bytes. (No idea how????).
+
+1st bin -> unsorted bin (chunks recently free'd)
+
+Small chunks(<512 bytes) are not sorted as all chunks in a given bin are of the same size. 
+
+Large chunks(>512 bytes && < 128kb) are sorted by size in the descending order and are allocated in FIFO order
+
+**Note**
+Top\_chunk and last\_reminder chunk would never be placed in the bin. 
+
+### Top chunk
+
+
+	
