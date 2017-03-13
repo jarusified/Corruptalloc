@@ -14,20 +14,20 @@ The allocated memory have the characteristic that they may not directly border a
 
 Writing a heap under invalid circumstances can overwrite meta-data in a de-allocated chunk of memory, or a write occurs to a dangling pointer or to an allocated chunk of memory.
 
-'''
+
 	typedef struct-heap-info{
 		mstate ar_ptr;
 		struct-heap-info *ptr;
 		size\_t size;
 		char pad[]
 }
-'''
+
 
 The above structure is pretty straightforward except mstate, it initialises an arena (mstate) with a pointer pointing to the previous arena in the memory. 
 
 Lets look into mstate:
 
-'''
+
 	struct malloc\_state{
 		mutex\_t mutex; // Ensures synchronized access to various data structures used by ptmalloc
 		int flags; // represents various characteristics of current arena.
@@ -41,7 +41,7 @@ Lets look into mstate:
 		INTERNAL\_SIZE\_T system\_mem;
 		INTERNAL\_SIZE\_T max\_system\_mem;
 	}
-'''
+
 
 There are like 2 bins, Fastbin and mchunkptr bins[]. bins array operates as a list of free chunks of memory. 
 
@@ -49,18 +49,18 @@ There are like 2 bins, Fastbin and mchunkptr bins[]. bins array operates as a li
 
 The chunks that are allocated by ptmalloc2 are of the same physical structure regardless of whether they are a fast chunk or a normal chunk. However the representation is different depending on the stateof the chunk. 
 
-''' 
+
 	struct malloc\_chunk {
 		INTERNAL\_SIZE\_T prev\_size;
 		INTERNAL\_SIZE\_T size;
 		struct malloc\_chunk* fd; // pointer to the next chunk 
 		struct malloc\_chunk* bk; // pointer to the prev chunk
 	}
-'''
+
 
 Regardless of how much memory is requested to be allocated, there will be extra bytes allocated for metadata, two variables (prev\_size and size) and two pointers to prev memory and the next memory (which sums up a 16,24 or 32 bytes of overhead per chunk). Also we have alignment issues, a malloc chunk must fall on a boundary of power of two at least as large as 2 times the sizeof(INTERNAL\_SIZE\_T). 
 
-'''
+
 
 	chunk -> ----------------------------
              Size of previous chunk
@@ -70,4 +70,4 @@ Regardless of how much memory is requested to be allocated, there will be extra 
               DATA
 		     ----------------------------
 			 
-'''
+
