@@ -125,7 +125,43 @@ Large chunks(>512 bytes && < 128kb) are sorted by size in the descending order a
 **Note**
 Top\_chunk and last\_reminder chunk would never be placed in the bin. 
 
-### Top chunk
+### Top chunk (aka wilderness)
+
+* The chunk that borders the end of available memory. 
+* Used when no adequate chunks are in the bin. (when even the last_reminder wont fit)
+* The top chunk can grow and shrink.
+* has specified place in memory
+* P is always set
+* Last resort to memory allocation, when the requested memory exceeds beyond the available memory for the top chunk, it extends using sbrk().
+
+
+### Last_remainder chunk
+
+* Last remainder chunk is the result of allocation requests for small chunks that have no exact fit in any of the bins. 
+
+```
+
+	if requested_mem > last_remainder && requested_mem < bin_mem :
+		chunk is split again
+		one part is handed out from the allocation
+		other becomes the last_remainder chunk
+```
+
+### Heap initialisation
+
+MALLOC\_PREACTION and MALLOC\_POSTACTION return 0 on success and non zero on failure. MALLOC\_POSTACTION is always 0 because there are no failures possible. This is used or needed for locking. 
+
+
+	public_malloc() -> __malloc_hook -> malloc_hook_ini()
+	
+	malloc_hook_ini():
+		__malloc_hook() -> NULL
+		call ptmalloc_init() 
+		
+	ptmalloc_init(): // arena.c
+		__malloc__ = 0 // if it hasnt been initialised
+		ptmalloc_init_minimal() 
 
 
 	
+
