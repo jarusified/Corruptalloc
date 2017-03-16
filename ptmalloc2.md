@@ -154,13 +154,15 @@ MALLOC\_PREACTION and MALLOC\_POSTACTION return 0 on success and non zero on fai
 
 	public_malloc() -> __malloc_hook -> malloc_hook_ini()
 	
-	malloc_hook_ini():
+	malloc_hook_ini(): // hooks.c
 		__malloc_hook() -> NULL
 		call ptmalloc_init() 
 		
 	ptmalloc_init(): // arena.c
 		__malloc__ = 0 // if it hasnt been initialised
-		ptmalloc_init_minimal() 
+		__pthread_initialize() // initialise POSIX thread interface
+		mutex_init() //to initialise a mutex.
+		
 
 
 	
