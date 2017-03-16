@@ -42,3 +42,16 @@
 	* Constant folding : Eliminates expressiosn that calculate a value that can already be determined when the program is compiled.
 	
 	
+* Link time optimisation
+It gives the compiler the capability of dumping the internal representation to the disk. This is mainly done to optimise all the compilation units together that make up an executatble. 
+
+gcc -flto -c f1.c
+gcc -flto -c f2.c
+gcc -flto -o f f1.o f2.o
+
+-fwhopr - similar to -flto but splits the compilation to increase scalability. It is intended to handle large programs whose call graphs dont fit the memory. 
+
+* GCC MELT
+It is a high level domain specific language for extending and customising the GCC. 
+
+Link: [GCC MELT](http://gcc-melt.org/)
