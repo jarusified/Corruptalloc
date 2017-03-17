@@ -163,7 +163,51 @@ MALLOC\_PREACTION and MALLOC\_POSTACTION return 0 on success and non zero on fai
 		__pthread_initialize() // initialise POSIX thread interface
 		mutex_init() //to initialise a mutex.
 		
+		
+### Creation of Heap
 
-
+arena\_get() acquires an arena and locks the corresponding mutex. First, try the one last locked successfully by this thread.(This is the common case and handled with a macro for speed.)  Then, loop once over the circularly linked list of arenas.  If no arena is readily available, create a new one.  In this latter case, `size' is just a hint as to how much memory will be required immediately in the new arena.
 	
+	arena_get(ar_ptr, bytes) // macro function 
+		ptr = (mstate)tsd_getspecific(arena_key, vptr); \\gets thread specific data for the arena_key
+		
+If it fails to create a lock on the mutex, it would call array\_get2 which creates a new arena.
+	
+	arena_get2(ar_ptr):
+		if(ar_ptr == NULL) 
+			return ptr to main arena.
+		else:
+			will attempt to lock all the mutexes in the circularly linked list.
+		fail_safe:
+			lock te list_lock mutex
+		fail_fail_safe:
+			blocking call to the mutex_lock() is made 
+		fail_fail_fail_safe:
+			call _int_new_arena()
+		
+	_int_new_arena():
+		new_heap()
+	
+	new_heap():
+		allocate the size of allocation + size of the heap_info structure + size of malloc_state structure + size of MALLOC_ALLIGNMENT
+		performs sanity checks too 
+		calls to mmap are made
+		mprotect is called to make the section read and write only. 
+		fail_safe:
+			return NULL
+			
+### Allocate a block
+Once arena is set, the program proceeds to call \_int\_malloc passing the size of request and the arena pointer. There are three scenarios which can tend to happen:
 
+	* Fit into the fastbin 
+	* Small normal bin
+	* Large normal bin 
+	* Neither of them
+	
+	_int_malloc seems to be the main important function which allocates the memory. 
+	
+#### Fastbin chunk
+	
+	fastbin_allocation():
+		fastbin_ptr 
+		
